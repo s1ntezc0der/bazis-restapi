@@ -4,8 +4,8 @@ import (
 	"database/sql"
 	"fmt"
 
-	"github.com/s1ntezc0der/bazis-restapi/internal/services/auth/entity"
-	"github.com/s1ntezc0der/bazis-restapi/pkg/errors"
+	"mkk_bazis/internal/services/auth/entity"
+	"mkk_bazis/pkg/errors"
 )
 
 type AuthRepository interface {

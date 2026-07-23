@@ -40,6 +40,10 @@ func (c *Cache) Get(ctx context.Context, key string, dest interface{}) error {
 	return json.Unmarshal([]byte(val), dest)
 }
 
+func (c *Cache) GetClient() *redis.Client {
+    return c.client
+}
+
 func (c *Cache) Set(ctx context.Context, key string, value interface{}, ttl time.Duration) error {
 	data, err := json.Marshal(value)
 	if err != nil {

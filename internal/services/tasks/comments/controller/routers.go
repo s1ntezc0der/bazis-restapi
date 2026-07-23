@@ -1,23 +1,17 @@
 package controller
 
 import (
-    "net/http"
+	"github.com/gin-gonic/gin"
 
-    "github.com/go-chi/chi/v5"
-
-    "github.com/s1ntezc0der/bazis-restapi/pkg/jwt"
-    "github.com/s1ntezc0der/bazis-restapi/pkg/middleware"
+	"mkk_bazis/pkg/jwt"
+	"mkk_bazis/pkg/middleware"
 )
 
-func NewCommentRouter(handler *CommentHandler, jwtConfig *jwt.JWTConfig) http.Handler {
-    r := chi.NewRouter()
-
-    r.Group(func(r chi.Router) {
-        r.Use(middleware.AuthMiddleware(jwtConfig))
-
-        r.Post("/{id}/comments", handler.AddComment)
-        r.Get("/{id}/comments", handler.GetComments)
-    })
-
-    return r
+func RegisterCommentRoutes(r *gin.Engine, handler *CommentHandler, jwtConfig *jwt.JWTConfig) {
+	api := r.Group("/api/v1")
+	api.Use(middleware.GinAuthMiddleware(jwtConfig))
+	{
+		api.POST("/tasks/:id/comments", handler.AddComment)
+		api.GET("/tasks/:id/comments", handler.GetComments)
+	}
 }

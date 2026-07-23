@@ -1,15 +1,13 @@
 package controller
 
 import (
-	"encoding/json"
 	"net/http"
 	"strconv"
 
-	"github.com/go-chi/chi/v5"
+	"github.com/gin-gonic/gin"
 
-	"github.com/s1ntezc0der/bazis-restapi/internal/services/tasks/comments/entity"
-	"github.com/s1ntezc0der/bazis-restapi/internal/services/tasks/comments/usecase"
-	"github.com/s1ntezc0der/bazis-restapi/pkg/middleware"
+	"mkk_bazis/internal/services/tasks/comments/entity"
+	"mkk_bazis/internal/services/tasks/comments/usecase"
 )
 
 type CommentHandler struct {
@@ -35,35 +33,32 @@ func NewCommentHandler(service usecase.CommentService) *CommentHandler {
 // @Failure 404 {string} string "Task not found"
 // @Failure 500 {string} string "Internal server error"
 // @Router /api/v1/tasks/{id}/comments [post]
-func (h *CommentHandler) AddComment(w http.ResponseWriter, r *http.Request) {
-	taskIDStr := chi.URLParam(r, "id")
-	taskID, err := strconv.ParseInt(taskIDStr, 10, 64)
+func (h *CommentHandler) AddComment(c *gin.Context) {
+	taskID, err := strconv.ParseInt(c.Param("id"), 10, 64)
 	if err != nil {
-		http.Error(w, "invalid task id", http.StatusBadRequest)
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid task id"})
 		return
 	}
 
-	userID, ok := r.Context().Value(middleware.UserIDKey).(int64)
-	if !ok {
-		http.Error(w, "unauthorized", http.StatusUnauthorized)
+	userID, exists := c.Get("user_id")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
 		return
 	}
 
 	var req entity.CreateCommentRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, "invalid request body", http.StatusBadRequest)
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request body"})
 		return
 	}
 
-	comment, err := h.service.AddComment(taskID, userID, req.Content)
+	comment, err := h.service.AddComment(taskID, userID.(int64), req.Content)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(comment)
+	c.JSON(http.StatusCreated, comment)
 }
 
 // GetComments godoc
@@ -78,22 +73,18 @@ func (h *CommentHandler) AddComment(w http.ResponseWriter, r *http.Request) {
 // @Failure 404 {string} string "Task not found"
 // @Failure 500 {string} string "Internal server error"
 // @Router /api/v1/tasks/{id}/comments [get]
-func (h *CommentHandler) GetComments(w http.ResponseWriter, r *http.Request) {
-	taskIDStr := chi.URLParam(r, "id")
-
-	taskID, err := strconv.ParseInt(taskIDStr, 10, 64)
+func (h *CommentHandler) GetComments(c *gin.Context) {
+	taskID, err := strconv.ParseInt(c.Param("id"), 10, 64)
 	if err != nil {
-		http.Error(w, "invalid task id", http.StatusBadRequest)
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid task id"})
 		return
 	}
 
 	comments, err := h.service.GetComments(taskID)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(comments)
+	c.JSON(http.StatusOK, comments)
 }
-

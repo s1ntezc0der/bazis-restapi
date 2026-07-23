@@ -2,6 +2,7 @@ package config
 
 import (
 	"os"
+	"strconv"
 )
 
 type DBConfig struct {
@@ -61,4 +62,3 @@ func getEnvInt(key string, fallback int) int {
 	}
 	return fallback
 }
-

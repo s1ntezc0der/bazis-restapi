@@ -1,12 +1,13 @@
 package controller
 
 import (
-	"encoding/json"
 	"net/http"
 
-	"github.com/s1ntezc0der/bazis-restapi/internal/services/auth/entity"
-	"github.com/s1ntezc0der/bazis-restapi/internal/services/auth/usecase"
-	"github.com/s1ntezc0der/bazis-restapi/pkg/errors"
+	"github.com/gin-gonic/gin"
+
+	"mkk_bazis/internal/services/auth/entity"
+	"mkk_bazis/internal/services/auth/usecase"
+	"mkk_bazis/pkg/errors"
 )
 
 type AuthHandler struct {
@@ -29,11 +30,10 @@ func NewAuthHandler(service usecase.AuthService) *AuthHandler {
 // @Failure 409 {string} string "Email already exists"
 // @Failure 500 {string} string "Internal server error"
 // @Router /api/v1/register [post]
-func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
+func (h *AuthHandler) Register(c *gin.Context) {
 	var req entity.RegisterRequest
-
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, "invalid request body", http.StatusBadRequest)
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request body"})
 		return
 	}
 
@@ -41,16 +41,14 @@ func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		switch err {
 		case errors.ErrEmailAlreadyExists:
-			http.Error(w, err.Error(), http.StatusConflict)
+			c.JSON(http.StatusConflict, gin.H{"error": err.Error()})
 		default:
-			http.Error(w, "internal server error", http.StatusInternalServerError)
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "internal server error"})
 		}
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(user)
+	c.JSON(http.StatusCreated, user)
 }
 
 // Login godoc
@@ -65,11 +63,10 @@ func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 // @Failure 401 {string} string "Invalid credentials"
 // @Failure 500 {string} string "Internal server error"
 // @Router /api/v1/login [post]
-func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
+func (h *AuthHandler) Login(c *gin.Context) {
 	var req entity.LoginRequest
-
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, "invalid request body", http.StatusBadRequest)
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request body"})
 		return
 	}
 
@@ -77,15 +74,12 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		switch err {
 		case errors.ErrInvalidCredentials:
-			http.Error(w, err.Error(), http.StatusUnauthorized)
+			c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
 		default:
-			http.Error(w, "internal server error", http.StatusInternalServerError)
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "internal server error"})
 		}
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(resp)
+	c.JSON(http.StatusOK, resp)
 }
-

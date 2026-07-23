@@ -6,8 +6,8 @@ import (
     "github.com/stretchr/testify/assert"
     "github.com/stretchr/testify/mock"
 
-    "github.com/s1ntezc0der/bazis-restapi/internal/services/teams/entity"
-    "github.com/s1ntezc0der/bazis-restapi/internal/services/teams/usecase"
+    "mkk_bazis/internal/services/teams/entity"
+    "mkk_bazis/internal/services/teams/usecase"
 )
 
 type MockTeamRepo struct {

@@ -3,10 +3,9 @@ package repository
 import (
 	"database/sql"
 	"fmt"
-	"strings"
 
-	"github.com/s1ntezc0der/bazis-restapi/internal/services/tasks/entity"
-	"github.com/s1ntezc0der/bazis-restapi/pkg/errors"
+	"mkk_bazis/internal/services/tasks/entity"
+	"mkk_bazis/pkg/errors"
 )
 
 type TaskRepository interface {
@@ -211,7 +210,7 @@ func (r *taskRepo) GetHistory(taskID int64) ([]entity.TaskHistory, error) {
 	return history, nil
 }
 
-func (r *taskRepo) GetTeamStats() ([]TeamStat, error) {
+func (r *taskRepo) GetTeamStats() ([]entity.TeamStat, error) {
 	query := `
 		SELECT 
 			t.id,
@@ -230,9 +229,9 @@ func (r *taskRepo) GetTeamStats() ([]TeamStat, error) {
 	}
 	defer rows.Close()
 
-	var stats []TeamStat
+	var stats []entity.TeamStat
 	for rows.Next() {
-		var s TeamStat
+		var s entity.TeamStat
 		if err := rows.Scan(
 			&s.TeamID, 
 			&s.TeamName, 
@@ -247,7 +246,7 @@ func (r *taskRepo) GetTeamStats() ([]TeamStat, error) {
 	return stats, nil
 }
 
-func (r *taskRepo) GetTopCreators() ([]TopCreator, error) {
+func (r *taskRepo) GetTopCreators() ([]entity.TopCreator, error) {
 	query := `
 		SELECT team_id, user_id, email, created_count, rank
 		FROM (
@@ -272,10 +271,10 @@ func (r *taskRepo) GetTopCreators() ([]TopCreator, error) {
 	}
 	defer rows.Close()
 
-	var creators []TopCreator
+	var creators []entity.TopCreator
 
 	for rows.Next() {
-		var c TopCreator
+		var c entity.TopCreator
 		if err := rows.Scan(
 			&c.TeamID, 
 			&c.UserID, 
@@ -291,7 +290,7 @@ func (r *taskRepo) GetTopCreators() ([]TopCreator, error) {
 	return creators, nil
 }
 
-func (r *taskRepo) GetInvalidAssignees() ([]InvalidAssignee, error) {
+func (r *taskRepo) GetInvalidAssignees() ([]entity.InvalidAssignee, error) {
 	query := `
 		SELECT 
 			t.id AS task_id,
@@ -312,10 +311,10 @@ func (r *taskRepo) GetInvalidAssignees() ([]InvalidAssignee, error) {
 	}
 	defer rows.Close()
 
-	var invalid []
-	
+	var invalid []entity.InvalidAssignee
+
 	for rows.Next() {
-		var i InvalidAssignee
+		var i entity.InvalidAssignee
 		if err := rows.Scan(
 			&i.TaskID, 
 			&i.TaskTitle, 

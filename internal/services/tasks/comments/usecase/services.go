@@ -1,8 +1,8 @@
 package usecase
 
 import (
-	"github.com/s1ntezc0der/bazis-restapi/internal/services/tasks/comments/entity"
-	"github.com/s1ntezc0der/bazis-restapi/internal/services/tasks/comments/repository"
+	"mkk_bazis/internal/services/tasks/comments/entity"
+	"mkk_bazis/internal/services/tasks/comments/repository"
 )
 
 type CommentService interface {

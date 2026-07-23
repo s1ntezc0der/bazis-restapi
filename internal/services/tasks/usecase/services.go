@@ -2,14 +2,15 @@ package usecase
 
 import (
 	"context"
-	"database/sql"
 	"fmt"
 	"reflect"
+	"time"
 
-	"github.com/s1ntezc0der/bazis-restapi/internal/services/tasks/entity"
-	"github.com/s1ntezc0der/bazis-restapi/internal/services/tasks/repository"
-	"github.com/s1ntezc0der/bazis-restapi/internal/services/teams/repository"
-	"github.com/s1ntezc0der/bazis-restapi/pkg/errors"
+	teamsRepo "mkk_bazis/internal/services/teams/repository"
+	"mkk_bazis/internal/services/tasks/entity"
+	"mkk_bazis/internal/services/tasks/repository"
+	"mkk_bazis/pkg/cache"
+	"mkk_bazis/pkg/errors"
 )
 
 type TaskService interface {
@@ -20,17 +21,21 @@ type TaskService interface {
 }
 
 type taskService struct {
-    taskRepo repository.TaskRepository
-    teamRepo teamsRepo.TeamRepository
-    cache    *cache.Cache
+	taskRepo repository.TaskRepository
+	teamRepo teamsRepo.TeamRepository
+	cache    *cache.Cache
 }
 
-func NewTaskService(taskRepo repository.TaskRepository, teamRepo teamsRepo.TeamRepository, cache *cache.Cache) TaskService {
+func NewTaskService(
+	taskRepo repository.TaskRepository,
+	teamRepo teamsRepo.TeamRepository,
+	cache *cache.Cache,
+) TaskService {
 	return &taskService{
-        taskRepo: taskRepo,
-        teamRepo: teamRepo,
-        cache:    cache,
-    }
+		taskRepo: taskRepo,
+		teamRepo: teamRepo,
+		cache:    cache,
+	}
 }
 
 func (s *taskService) CreateTask(userID int64, req *entity.CreateTaskRequest) (*entity.Task, error) {
@@ -69,7 +74,25 @@ func (s *taskService) CreateTask(userID int64, req *entity.CreateTaskRequest) (*
 }
 
 func (s *taskService) GetTasks(filter *entity.TaskFilter) ([]entity.Task, error) {
-	return s.taskRepo.GetFiltered(filter)
+	cacheKey := fmt.Sprintf("tasks:team:%d:status:%s:assignee:%d", filter.TeamID, filter.Status, filter.AssigneeID)
+
+	var tasks []entity.Task
+	if s.cache != nil {
+		if err := s.cache.Get(context.Background(), cacheKey, &tasks); err == nil {
+			return tasks, nil
+		}
+	}
+
+	tasks, err := s.taskRepo.GetFiltered(filter)
+	if err != nil {
+		return nil, err
+	}
+
+	if s.cache != nil {
+		_ = s.cache.Set(context.Background(), cacheKey, tasks, 5*time.Minute)
+	}
+
+	return tasks, nil
 }
 
 func (s *taskService) UpdateTask(userID int64, taskID int64, req *entity.UpdateTaskRequest) (*entity.Task, error) {
@@ -175,21 +198,3 @@ func (s *taskService) saveHistory(old, new *entity.Task, userID int64) {
 		}
 	}
 }
-
-func (s *taskService) GetTasks(filter *entity.TaskFilter) ([]entity.Task, error) {
-    cacheKey := fmt.Sprintf("tasks:team:%d:status:%s:assignee:%d", filter.TeamID, filter.Status, filter.AssigneeID)
-    
-    var tasks []entity.Task
-    if err := s.cache.Get(context.Background(), cacheKey, &tasks); err == nil {
-        return tasks, nil
-    }
-
-    tasks, err := s.taskRepo.GetFiltered(filter)
-    if err != nil {
-        return nil, err
-    }
-
-    s.cache.Set(context.Background(), cacheKey, tasks, 5*time.Minute)
-    return tasks, nil
-}
-

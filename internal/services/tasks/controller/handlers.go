@@ -1,15 +1,13 @@
 package controller
 
 import (
-	"encoding/json"
 	"net/http"
 	"strconv"
 
-	"github.com/go-chi/chi/v5"
+	"github.com/gin-gonic/gin"
 
-	"github.com/s1ntezc0der/bazis-restapi/internal/services/tasks/entity"
-	"github.com/s1ntezc0der/bazis-restapi/internal/services/tasks/usecase"
-	"github.com/s1ntezc0der/bazis-restapi/pkg/middleware"
+	"mkk_bazis/internal/services/tasks/entity"
+	"mkk_bazis/internal/services/tasks/usecase"
 )
 
 type TaskHandler struct {
@@ -34,28 +32,26 @@ func NewTaskHandler(service usecase.TaskService) *TaskHandler {
 // @Failure 403 {string} string "Forbidden"
 // @Failure 500 {string} string "Internal server error"
 // @Router /api/v1/tasks [post]
-func (h *TaskHandler) CreateTask(w http.ResponseWriter, r *http.Request) {
-	userID, ok := r.Context().Value(middleware.UserIDKey).(int64)
-	if !ok {
-		http.Error(w, "unauthorized", http.StatusUnauthorized)
+func (h *TaskHandler) CreateTask(c *gin.Context) {
+	userID, exists := c.Get("user_id")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
 		return
 	}
 
 	var req entity.CreateTaskRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, "invalid request body", http.StatusBadRequest)
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request body"})
 		return
 	}
 
-	task, err := h.service.CreateTask(userID, &req)
+	task, err := h.service.CreateTask(userID.(int64), &req)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(task)
+	c.JSON(http.StatusCreated, task)
 }
 
 // GetTasks godoc
@@ -73,38 +69,35 @@ func (h *TaskHandler) CreateTask(w http.ResponseWriter, r *http.Request) {
 // @Failure 401 {string} string "Unauthorized"
 // @Failure 500 {string} string "Internal server error"
 // @Router /api/v1/tasks [get]
-func (h *TaskHandler) GetTasks(w http.ResponseWriter, r *http.Request) {
-	query := r.URL.Query()
-
+func (h *TaskHandler) GetTasks(c *gin.Context) {
 	filter := &entity.TaskFilter{
 		Limit:  10,
 		Offset: 0,
 	}
 
-	if teamID, err := strconv.ParseInt(query.Get("team_id"), 10, 64); err == nil {
+	if teamID, err := strconv.ParseInt(c.Query("team_id"), 10, 64); err == nil {
 		filter.TeamID = teamID
 	}
-	if status := query.Get("status"); status != "" {
+	if status := c.Query("status"); status != "" {
 		filter.Status = status
 	}
-	if assigneeID, err := strconv.ParseInt(query.Get("assignee_id"), 10, 64); err == nil {
+	if assigneeID, err := strconv.ParseInt(c.Query("assignee_id"), 10, 64); err == nil {
 		filter.AssigneeID = assigneeID
 	}
-	if limit, err := strconv.Atoi(query.Get("limit")); err == nil {
+	if limit, err := strconv.Atoi(c.Query("limit")); err == nil {
 		filter.Limit = limit
 	}
-	if offset, err := strconv.Atoi(query.Get("offset")); err == nil {
+	if offset, err := strconv.Atoi(c.Query("offset")); err == nil {
 		filter.Offset = offset
 	}
 
 	tasks, err := h.service.GetTasks(filter)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(tasks)
+	c.JSON(http.StatusOK, tasks)
 }
 
 // UpdateTask godoc
@@ -123,34 +116,32 @@ func (h *TaskHandler) GetTasks(w http.ResponseWriter, r *http.Request) {
 // @Failure 404 {string} string "Task not found"
 // @Failure 500 {string} string "Internal server error"
 // @Router /api/v1/tasks/{id} [put]
-func (h *TaskHandler) UpdateTask(w http.ResponseWriter, r *http.Request) {
-	taskIDStr := chi.URLParam(r, "id")
-	taskID, err := strconv.ParseInt(taskIDStr, 10, 64)
+func (h *TaskHandler) UpdateTask(c *gin.Context) {
+	taskID, err := strconv.ParseInt(c.Param("id"), 10, 64)
 	if err != nil {
-		http.Error(w, "invalid task id", http.StatusBadRequest)
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid task id"})
 		return
 	}
 
-	userID, ok := r.Context().Value(middleware.UserIDKey).(int64)
-	if !ok {
-		http.Error(w, "unauthorized", http.StatusUnauthorized)
+	userID, exists := c.Get("user_id")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
 		return
 	}
 
 	var req entity.UpdateTaskRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, "invalid request body", http.StatusBadRequest)
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request body"})
 		return
 	}
 
-	task, err := h.service.UpdateTask(userID, taskID, &req)
+	task, err := h.service.UpdateTask(userID.(int64), taskID, &req)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(task)
+	c.JSON(http.StatusOK, task)
 }
 
 // GetHistory godoc
@@ -165,21 +156,19 @@ func (h *TaskHandler) UpdateTask(w http.ResponseWriter, r *http.Request) {
 // @Failure 404 {string} string "Task not found"
 // @Failure 500 {string} string "Internal server error"
 // @Router /api/v1/tasks/{id}/history [get]
-func (h *TaskHandler) GetHistory(w http.ResponseWriter, r *http.Request) {
-	taskIDStr := chi.URLParam(r, "id")
-	taskID, err := strconv.ParseInt(taskIDStr, 10, 64)
+func (h *TaskHandler) GetHistory(c *gin.Context) {
+	taskID, err := strconv.ParseInt(c.Param("id"), 10, 64)
 	if err != nil {
-		http.Error(w, "invalid task id", http.StatusBadRequest)
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid task id"})
 		return
 	}
 
 	history, err := h.service.GetHistory(taskID)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(history)
+	c.JSON(http.StatusOK, history)
 }
 

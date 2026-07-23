@@ -10,8 +10,8 @@ import (
     "strings"
     "time"
 
-    "github.com/s1ntezc0der/bazis-restapi/internal/config"
-    "github.com/s1ntezc0der/bazis-restapi/pkg/db"
+    "mkk_bazis/internal/config"
+    "mkk_bazis/pkg/db"
 )
 
 func migrateUp(db *sql.DB, dir string) error {
@@ -73,7 +73,13 @@ func main() {
 
 	cfg := config.Load()
 
-	conn, err := db.NewMySQLDB(cfg.DB)
+	conn, err := db.NewMySQLDB(db.Config{
+        User:     cfg.DB.User,
+        Password: cfg.DB.Password,
+        Host:     cfg.DB.Host,
+        Port:     cfg.DB.Port,
+        Name:     cfg.DB.Name,
+    })
 	if err != nil {
 		log.Fatal(err)
 	}

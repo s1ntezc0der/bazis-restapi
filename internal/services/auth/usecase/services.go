@@ -5,10 +5,10 @@ import (
 
 	"golang.org/x/crypto/bcrypt"
 
-	"github.com/s1ntezc0der/bazis-restapi/internal/services/auth/entity"
-	"github.com/s1ntezc0der/bazis-restapi/internal/services/auth/repository"
-	"github.com/s1ntezc0der/bazis-restapi/pkg/errors"
-	"github.com/s1ntezc0der/bazis-restapi/pkg/jwt"
+	"mkk_bazis/internal/services/auth/entity"
+	"mkk_bazis/internal/services/auth/repository"
+	"mkk_bazis/pkg/errors"
+	"mkk_bazis/pkg/jwt"
 )
 
 type AuthService interface {

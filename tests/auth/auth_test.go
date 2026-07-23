@@ -7,9 +7,9 @@ import (
     "github.com/stretchr/testify/assert"
     "github.com/stretchr/testify/mock"
 
-    "github.com/s1ntezc0der/bazis-restapi/internal/services/auth/entity"
-    "github.com/s1ntezc0der/bazis-restapi/internal/services/auth/usecase"
-    "github.com/s1ntezc0der/bazis-restapi/pkg/jwt"
+    "mkk_bazis/internal/services/auth/entity"
+    "mkk_bazis/internal/services/auth/usecase"
+    "mkk_bazis/pkg/jwt"
 )
 
 type MockAuthRepo struct {

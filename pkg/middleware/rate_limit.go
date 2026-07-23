@@ -6,6 +6,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/gin-gonic/gin"
 	"github.com/redis/go-redis/v9"
 )
 
@@ -60,3 +61,22 @@ func RateLimitMiddleware(rl *RateLimiter) func(http.Handler) http.Handler {
 	}
 }
 
+func GinRateLimitMiddleware(rl *RateLimiter) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		userID, _ := c.Get("user_id")
+		var key string
+		if userID != nil {
+			key = "rate_limit:user:" + strconv.FormatInt(userID.(int64), 10)
+		} else {
+			key = "rate_limit:ip:" + c.ClientIP()
+		}
+
+		if !rl.Allow(key) {
+			c.AbortWithStatusJSON(http.StatusTooManyRequests, gin.H{
+				"error": "Too many requests",
+			})
+			return
+		}
+		c.Next()
+	}
+}

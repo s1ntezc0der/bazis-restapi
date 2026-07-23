@@ -4,8 +4,8 @@ import (
 	"database/sql"
 	"fmt"
 
-	"github.com/s1ntezc0der/bazis-restapi/internal/services/teams/entity"
-	"github.com/s1ntezc0der/bazis-restapi/pkg/errors"
+	"mkk_bazis/internal/services/teams/entity"
+	"mkk_bazis/pkg/errors"
 )
 
 type TeamRepository interface {

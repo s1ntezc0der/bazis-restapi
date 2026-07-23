@@ -9,7 +9,7 @@ import (
 type State int
 
 const (
-	StateClosed State = iota工作
+	StateClosed State = iota
 	StateOpen
 	StateHalfOpen
 )
@@ -47,17 +47,13 @@ func (cb *CircuitBreaker) Call(fn func() error) error {
 		} else {
 			return errors.New("circuit breaker is open")
 		}
-
 	case StateHalfOpen:
-
 	}
 
 	err := fn()
-
 	if err != nil {
 		cb.failureCount++
 		cb.lastFailureTime = time.Now()
-
 		if cb.state == StateHalfOpen || cb.failureCount >= cb.maxFailures {
 			cb.state = StateOpen
 		}

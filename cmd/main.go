@@ -3,7 +3,9 @@ package main
 import (
 	"log"
 
-	"github.com/s1ntezc0der/bazis-restapi/internal/run"
+	_ "mkk_bazis/docs"
+
+	"mkk_bazis/internal/run"
 )
 
 // @title Task Management API

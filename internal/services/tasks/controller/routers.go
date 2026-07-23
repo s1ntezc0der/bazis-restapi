@@ -1,26 +1,19 @@
 package controller
 
 import (
-	"net/http"
+	"github.com/gin-gonic/gin"
 
-	"github.com/go-chi/chi/v5"
-
-	"github.com/s1ntezc0der/bazis-restapi/pkg/jwt"
-	"github.com/s1ntezc0der/bazis-restapi/pkg/middleware"
+	"mkk_bazis/pkg/jwt"
+	"mkk_bazis/pkg/middleware"
 )
 
-func NewTaskRouter(handler *TaskHandler, jwtConfig *jwt.JWTConfig) http.Handler {
-	r := chi.NewRouter()
-
-	r.Group(func(r chi.Router) {
-		r.Use(middleware.AuthMiddleware(jwtConfig))
-
-		r.Post("/api/v1/tasks", handler.CreateTask)
-		r.Get("/api/v1/tasks", handler.GetTasks)
-		r.Put("/api/v1/tasks/{id}", handler.UpdateTask)
-		r.Get("/api/v1/tasks/{id}/history", handler.GetHistory)
-	})
-
-	return r
+func RegisterTaskRoutes(r *gin.Engine, handler *TaskHandler, jwtConfig *jwt.JWTConfig) {
+	api := r.Group("/api/v1")
+	api.Use(middleware.GinAuthMiddleware(jwtConfig))
+	{
+		api.POST("/tasks", handler.CreateTask)
+		api.GET("/tasks", handler.GetTasks)
+		api.PUT("/tasks/:id", handler.UpdateTask)
+		api.GET("/tasks/:id/history", handler.GetHistory)
+	}
 }
-

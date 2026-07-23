@@ -1,11 +1,14 @@
 package usecase
 
 import (
-	"github.com/s1ntezc0der/bazis-restapi/internal/services/auth/repository"
-	authRepo "github.com/s1ntezc0der/bazis-restapi/internal/services/auth/repository"
-	"github.com/s1ntezc0der/bazis-restapi/internal/services/teams/entity"
-	"github.com/s1ntezc0der/bazis-restapi/internal/services/teams/repository"
-	"github.com/s1ntezc0der/bazis-restapi/pkg/errors"
+	"log"
+	"time"
+
+	authRepo "mkk_bazis/internal/services/auth/repository"
+	"mkk_bazis/internal/services/teams/entity"
+	"mkk_bazis/internal/services/teams/repository"
+	"mkk_bazis/pkg/errors"
+	"mkk_bazis/pkg/middleware"
 )
 
 type TeamService interface {
@@ -81,19 +84,15 @@ func (s *teamService) InviteUser(teamID, inviterID, userID int64) error {
 		Role:   "member",
 	}
 
-	// Мок email service с Circuit Breaker
-    emailService := middleware.NewCircuitBreaker(3, 2, 5*time.Second)
-    err := emailService.Call(func() error {
-        // Имитация отправки email
-        log.Printf("📧 Приглашение отправлено пользователю %d в команду %d", userID, teamID)
-        return nil
-    })
-    if err != nil {
-        return errors.ErrInternal
-    }
-    
-    // return nil
-	
+	emailService := middleware.NewCircuitBreaker(3, 2, 5*time.Second)
+	err = emailService.Call(func() error {
+		log.Printf("Приглашение отправлено пользователю %d в команду %d", userID, teamID)
+		return nil
+	})
+	if err != nil {
+		return errors.ErrInternal
+	}
+
 	return s.teamRepo.AddMember(newMember)
 }
 

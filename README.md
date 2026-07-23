@@ -18,8 +18,8 @@ REST API сервис для управления задачами в коман
 ### 1. Клонировать репозиторий
 
 ```bash
-	git clone https://github.com/s1ntezc0der/mkk_bazis.git
-	cd mkk_bazis
+	git clone https://github.com/s1ntezc0der/bazis-restapi.git
+	cd bazis-restapi
 ```
 
 ### 2. Запустить через Docker Compose

@@ -14,8 +14,8 @@ import (
 	"github.com/testcontainers/testcontainers-go"
 	"github.com/testcontainers/testcontainers-go/wait"
 
-	"github.com/s1ntezc0der/bazis-restapi/internal/config"
-	"github.com/s1ntezc0der/bazis-restapi/internal/run"
+	"mkk_bazis/internal/config"
+	"mkk_bazis/internal/run"
 )
 
 const (

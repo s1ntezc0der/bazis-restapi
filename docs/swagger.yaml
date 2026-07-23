@@ -1,0 +1,607 @@
+basePath: /api/v1
+definitions:
+  entity.CreateCommentRequest:
+    properties:
+      content:
+        type: string
+    required:
+    - content
+    type: object
+  entity.CreateTaskRequest:
+    properties:
+      assignee_id:
+        type: integer
+      description:
+        type: string
+      team_id:
+        type: integer
+      title:
+        type: string
+    required:
+    - team_id
+    - title
+    type: object
+  entity.CreateTeamRequest:
+    properties:
+      description:
+        type: string
+      name:
+        type: string
+    required:
+    - name
+    type: object
+  entity.InviteRequest:
+    properties:
+      user_id:
+        type: integer
+    required:
+    - user_id
+    type: object
+  entity.LoginRequest:
+    properties:
+      email:
+        type: string
+      password:
+        type: string
+    required:
+    - email
+    - password
+    type: object
+  entity.LoginResponse:
+    properties:
+      token:
+        type: string
+      user:
+        $ref: '#/definitions/entity.User'
+    type: object
+  entity.RegisterRequest:
+    properties:
+      email:
+        type: string
+      name:
+        type: string
+      password:
+        minLength: 6
+        type: string
+    required:
+    - email
+    - name
+    - password
+    type: object
+  entity.Task:
+    properties:
+      assignee_id:
+        type: integer
+      created_at:
+        type: string
+      created_by:
+        type: integer
+      description:
+        type: string
+      id:
+        type: integer
+      status:
+        type: string
+      team_id:
+        type: integer
+      title:
+        type: string
+      updated_at:
+        type: string
+    type: object
+  entity.TaskComment:
+    properties:
+      content:
+        type: string
+      created_at:
+        type: string
+      id:
+        type: integer
+      task_id:
+        type: integer
+      user_id:
+        type: integer
+    type: object
+  entity.TaskHistory:
+    properties:
+      changed_at:
+        type: string
+      changed_by:
+        type: integer
+      field:
+        type: string
+      id:
+        type: integer
+      new_value:
+        type: string
+      old_value:
+        type: string
+      task_id:
+        type: integer
+    type: object
+  entity.Team:
+    properties:
+      created_at:
+        type: string
+      created_by:
+        type: integer
+      description:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+      updated_at:
+        type: string
+    type: object
+  entity.UpdateTaskRequest:
+    properties:
+      assignee_id:
+        type: integer
+      description:
+        type: string
+      status:
+        type: string
+      title:
+        type: string
+    type: object
+  entity.User:
+    properties:
+      created_at:
+        type: string
+      email:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+      updated_at:
+        type: string
+    type: object
+host: localhost:8080
+info:
+  contact:
+    email: support@example.com
+    name: API Support
+  description: Сервис управления задачами с командной работой и историей изменений
+  license:
+    name: MIT
+  termsOfService: http://swagger.io/terms/
+  title: Task Management API
+  version: "1.0"
+paths:
+  /api/v1/login:
+    post:
+      consumes:
+      - application/json
+      description: Возвращает JWT токен
+      parameters:
+      - description: Данные для входа
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/entity.LoginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Токен и данные пользователя
+          schema:
+            $ref: '#/definitions/entity.LoginResponse'
+        "400":
+          description: Invalid request body
+          schema:
+            type: string
+        "401":
+          description: Invalid credentials
+          schema:
+            type: string
+        "500":
+          description: Internal server error
+          schema:
+            type: string
+      summary: Аутентификация пользователя
+      tags:
+      - auth
+  /api/v1/register:
+    post:
+      consumes:
+      - application/json
+      description: Создаёт нового пользователя с email, паролем и именем
+      parameters:
+      - description: Данные для регистрации
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/entity.RegisterRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Пользователь создан
+          schema:
+            $ref: '#/definitions/entity.User'
+        "400":
+          description: Invalid request body
+          schema:
+            type: string
+        "409":
+          description: Email already exists
+          schema:
+            type: string
+        "500":
+          description: Internal server error
+          schema:
+            type: string
+      summary: Регистрация нового пользователя
+      tags:
+      - auth
+  /api/v1/tasks:
+    get:
+      description: Возвращает задачи с фильтрацией по команде, статусу, исполнителю
+        и пагинацией
+      parameters:
+      - description: ID команды
+        in: query
+        name: team_id
+        type: integer
+      - description: Статус задачи (todo, in_progress, done)
+        in: query
+        name: status
+        type: string
+      - description: ID исполнителя
+        in: query
+        name: assignee_id
+        type: integer
+      - default: 10
+        description: Лимит записей
+        in: query
+        name: limit
+        type: integer
+      - default: 0
+        description: Смещение
+        in: query
+        name: offset
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Список задач
+          schema:
+            items:
+              $ref: '#/definitions/entity.Task'
+            type: array
+        "401":
+          description: Unauthorized
+          schema:
+            type: string
+        "500":
+          description: Internal server error
+          schema:
+            type: string
+      security:
+      - BearerAuth: []
+      summary: Список задач с фильтрацией
+      tags:
+      - tasks
+    post:
+      consumes:
+      - application/json
+      description: Создаёт новую задачу в команде (только член команды)
+      parameters:
+      - description: Данные задачи
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/entity.CreateTaskRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Задача создана
+          schema:
+            $ref: '#/definitions/entity.Task'
+        "400":
+          description: Invalid request body
+          schema:
+            type: string
+        "401":
+          description: Unauthorized
+          schema:
+            type: string
+        "403":
+          description: Forbidden
+          schema:
+            type: string
+        "500":
+          description: Internal server error
+          schema:
+            type: string
+      security:
+      - BearerAuth: []
+      summary: Создать задачу
+      tags:
+      - tasks
+  /api/v1/tasks/{id}:
+    put:
+      consumes:
+      - application/json
+      description: Обновляет поля задачи (только owner/admin или создатель)
+      parameters:
+      - description: ID задачи
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Данные для обновления
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/entity.UpdateTaskRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Задача обновлена
+          schema:
+            $ref: '#/definitions/entity.Task'
+        "400":
+          description: Invalid request body
+          schema:
+            type: string
+        "401":
+          description: Unauthorized
+          schema:
+            type: string
+        "403":
+          description: Forbidden
+          schema:
+            type: string
+        "404":
+          description: Task not found
+          schema:
+            type: string
+        "500":
+          description: Internal server error
+          schema:
+            type: string
+      security:
+      - BearerAuth: []
+      summary: Обновить задачу
+      tags:
+      - tasks
+  /api/v1/tasks/{id}/comments:
+    get:
+      description: Возвращает все комментарии к задаче
+      parameters:
+      - description: ID задачи
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Список комментариев
+          schema:
+            items:
+              $ref: '#/definitions/entity.TaskComment'
+            type: array
+        "401":
+          description: Unauthorized
+          schema:
+            type: string
+        "404":
+          description: Task not found
+          schema:
+            type: string
+        "500":
+          description: Internal server error
+          schema:
+            type: string
+      security:
+      - BearerAuth: []
+      summary: Получить все комментарии к задаче
+      tags:
+      - tasks
+    post:
+      consumes:
+      - application/json
+      description: Добавляет комментарий к задаче
+      parameters:
+      - description: ID задачи
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Текст комментария
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/entity.CreateCommentRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Комментарий создан
+          schema:
+            $ref: '#/definitions/entity.TaskComment'
+        "400":
+          description: Invalid request body
+          schema:
+            type: string
+        "401":
+          description: Unauthorized
+          schema:
+            type: string
+        "404":
+          description: Task not found
+          schema:
+            type: string
+        "500":
+          description: Internal server error
+          schema:
+            type: string
+      security:
+      - BearerAuth: []
+      summary: Добавить комментарий к задаче
+      tags:
+      - tasks
+  /api/v1/tasks/{id}/history:
+    get:
+      description: Возвращает историю изменений задачи
+      parameters:
+      - description: ID задачи
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: История изменений
+          schema:
+            items:
+              $ref: '#/definitions/entity.TaskHistory'
+            type: array
+        "401":
+          description: Unauthorized
+          schema:
+            type: string
+        "404":
+          description: Task not found
+          schema:
+            type: string
+        "500":
+          description: Internal server error
+          schema:
+            type: string
+      security:
+      - BearerAuth: []
+      summary: История изменений задачи
+      tags:
+      - tasks
+  /api/v1/teams:
+    get:
+      description: Возвращает все команды, в которых состоит текущий пользователь
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Список команд
+          schema:
+            items:
+              $ref: '#/definitions/entity.Team'
+            type: array
+        "401":
+          description: Unauthorized
+          schema:
+            type: string
+        "500":
+          description: Internal server error
+          schema:
+            type: string
+      security:
+      - BearerAuth: []
+      summary: Список команд пользователя
+      tags:
+      - teams
+    post:
+      consumes:
+      - application/json
+      description: Создаёт новую команду и назначает текущего пользователя владельцем
+      parameters:
+      - description: Данные команды
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/entity.CreateTeamRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Команда создана
+          schema:
+            $ref: '#/definitions/entity.Team'
+        "400":
+          description: Invalid request body
+          schema:
+            type: string
+        "401":
+          description: Unauthorized
+          schema:
+            type: string
+        "500":
+          description: Internal server error
+          schema:
+            type: string
+      security:
+      - BearerAuth: []
+      summary: Создать команду
+      tags:
+      - teams
+  /api/v1/teams/{id}/invite:
+    post:
+      consumes:
+      - application/json
+      description: Приглашает пользователя в команду (только owner/admin)
+      parameters:
+      - description: ID команды
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: ID приглашаемого пользователя
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/entity.InviteRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Invitation sent
+          schema:
+            type: string
+        "400":
+          description: Invalid request body
+          schema:
+            type: string
+        "401":
+          description: Unauthorized
+          schema:
+            type: string
+        "403":
+          description: Forbidden
+          schema:
+            type: string
+        "404":
+          description: Team or user not found
+          schema:
+            type: string
+        "500":
+          description: Internal server error
+          schema:
+            type: string
+      security:
+      - BearerAuth: []
+      summary: Пригласить пользователя в команду
+      tags:
+      - teams
+securityDefinitions:
+  BearerAuth:
+    description: 'Введите токен в формате: Bearer <token>'
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"

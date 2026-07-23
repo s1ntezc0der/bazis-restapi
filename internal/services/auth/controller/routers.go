@@ -1,17 +1,13 @@
 package controller
 
 import (
-	"net/http"
-
-	"github.com/go-chi/chi/v5"
+	"github.com/gin-gonic/gin"
 )
 
-func NewAuthRouter(handler *AuthHandler) http.Handler {
-	r := chi.NewRouter()
-
-	r.Post("/api/v1/register", handler.Register)
-	r.Post("/api/v1/login", handler.Login)
-
-	return r
+func RegisterAuthRoutes(r *gin.Engine, handler *AuthHandler) {
+	api := r.Group("/api/v1")
+	{
+		api.POST("/register", handler.Register)
+		api.POST("/login", handler.Login)
+	}
 }
-

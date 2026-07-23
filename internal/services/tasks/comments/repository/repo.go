@@ -4,8 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 
-	"github.com/s1ntezc0der/bazis-restapi/internal/services/tasks/comments/entity"
-	"github.com/s1ntezc0der/bazis-restapi/pkg/errors"
+	"mkk_bazis/internal/services/tasks/comments/entity"
 )
 
 type CommentRepository interface {
