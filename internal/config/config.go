@@ -26,6 +26,7 @@ type Config struct {
 	DB     DBConfig
 	Server ServerConfig
 	JWT    JWTConfig
+	RedisAddr string `env:"REDIS_ADDR"`
 }
 
 func Load() Config {

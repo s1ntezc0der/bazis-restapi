@@ -6,9 +6,11 @@ import (
     "github.com/stretchr/testify/assert"
     "github.com/stretchr/testify/mock"
 
+    authEntity "mkk_bazis/internal/services/auth/entity"
     "mkk_bazis/internal/services/teams/entity"
     "mkk_bazis/internal/services/teams/usecase"
 )
+
 
 type MockTeamRepo struct {
     mock.Mock
@@ -59,18 +61,18 @@ type MockAuthRepo struct {
     mock.Mock
 }
 
-func (m *MockAuthRepo) CreateUser(user *entity.User) error {
+func (m *MockAuthRepo) CreateUser(user *authEntity.User) error {
     return nil
 }
-func (m *MockAuthRepo) GetUserByEmail(email string) (*entity.User, error) {
+func (m *MockAuthRepo) GetUserByEmail(email string) (*authEntity.User, error) {
     return nil, nil
 }
-func (m *MockAuthRepo) GetUserByID(id int64) (*entity.User, error) {
+func (m *MockAuthRepo) GetUserByID(id int64) (*authEntity.User, error) {
     args := m.Called(id)
     if args.Get(0) == nil {
         return nil, args.Error(1)
     }
-    return args.Get(0).(*entity.User), args.Error(1)
+    return args.Get(0).(*authEntity.User), args.Error(1)
 }
 
 func TestCreateTeam_Success(t *testing.T) {

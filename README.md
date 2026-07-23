@@ -164,9 +164,16 @@ http://localhost:8080/metrics
 # Unit-тесты
 go test ./tests/...
 
-# С покрытием
-go test ./tests/... -cover
+# Запустить все тесты с покрытием
+go test ./tests/... -cover -coverprofile=coverage.out
 
 # Интеграционные тесты
 go test ./tests/integration/... -tags=integration
+
+# Посмотреть общее покрытие
+go tool cover -func=coverage.out | grep total
+
+# Посмотреть детально по файлам
+go tool cover -func=coverage.out | grep -v "100.0%"
 ```
+
